@@ -1,0 +1,19 @@
+index:
+   path: /
+   controller: App\Controller\IndexController::index
+
+addTask:
+   path: /tasks
+   controller: App\Controller\IndexController::add
+
+updateTask:
+   path: /tasks/{task}/update
+   controller: App\Controller\IndexController::update
+
+deleteTask:
+   path: /tasks/{task}/delete
+   controller: App\Controller\IndexController::delete
+
+completeTask:
+   path: /tasks/{task}/complete
+   controller: App\Controller\IndexController::complete

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>ToDo List</title>
+	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+	<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+	<link rel="stylesheet" href="/css/style.css">
+	<link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+	<link rel="stylesheet" href="https://cdn.materialdesignicons.com/2.2.43/css/materialdesignicons.min.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pretty-checkbox/3.0.3/pretty-checkbox.css">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/0.4.0/modern-normalize.css">
+</head>
+
+<body>
+	<div id="hero" class="hero">
+		<h1 class="title">Список задач</h1>
+		<div id="todoApp" class="todo-app">
+			<div id="todoMenu1" class="todo-menu-1">
+				<button id="toggleAll" class="toggle-all" aria-label="Выбрать все задачи">
+					<span class="rotate">&#x276F;</span>
+				</button>
+				<input @keyup.enter="addTask" v-model="newTask" 
+					   id="addTodoTextInput" class="add-todo-text-input"
+					   type="text" placeholder="Чем хотите заняться?" 
+					   aria-label="Введите название задачи" autofocus
+					   minlength="1"
+				>
+			</div>
+			<ul id="todos" class="todos" aria-label="Список задач">
+				<li class="todo task-item" v-for="task, i in tasks">
+					<div class="pretty p-icon p-round">
+						<input type="checkbox" class="checkbox" v-on:change="event => completeTask(event, i)" v-bind:checked="task.isComplete">
+						<div class="state">
+							<i class="icon mdi mdi-check mdi-18px"></i>
+							<label></label>
+						</div>
+					</div>
+					<label v-bind:class="{completed: task.isComplete}" class="todo-text" contenteditable="true" @blur="event => editTask(event, i)">
+						{{ "{{ task.name }}" }}
+					</label>
+					<button	class="delete-button" v-on:click="deleteTask(task, i)">×</button>
+				</li>
+			</ul>
+			<div id="todoMenu2" class="todo-menu-2">
+				<label id="todosLeft" class="todos-left"></label>
+				<div id="todoMenu2Buttons" class="todo-menu-2-buttons">
+					<input type="button" class="menu-2-button" onclick="location.href='https://google.com';" value="Репозиторий в GitLAB ">
+				</div>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript">
+		var app = new Vue({
+			el: '#hero',
+			data: {
+				newTask: "",
+				tasks: [
+					{% for task in tasks %}
+					{
+						id: {{ task.id }},
+						name: `{{ task.name }}`,
+						isComplete: `{{ task.isCompleted }}`
+					},
+					{% endfor %}
+				]
+			},
+			methods: {
+				addTask: function(){
+					let handler = function(response){
+						this.tasks.push({
+							id: response.id,
+							name: this.newTask
+						});
+						this.newTask = "";
+					};
+					$.post('/tasks', {name: this.newTask}, $.proxy(handler, this));
+				},
+				editTask: function(event, i){
+					let handler = function(response){
+						Vue.set(this.tasks, i, this.tasks[i]);
+					};
+					if (this.tasks[i]['name'] !== event.target.innerText) {
+						this.tasks[i]['name'] =	event.target.innerText;
+						$.post('/tasks/' + this.tasks[i]['id'] + '/update', this.tasks[i], $.proxy(handler, this));
+					}
+				},
+				deleteTask: function (task, i) {
+					if(this.tasks[i] === task) { 
+						$.post('/tasks/' + this.tasks[i]['id'] + '/delete');
+					} else {
+						let i = this.tasks.indexOf(task)
+						$.post('/tasks/' + this.tasks[i]['id'] + '/delete');
+					}
+					
+					this.$delete(this.tasks, i);
+				},
+				completeTask: function(event, i){
+					let handler = function(response){
+						Vue.set(this.tasks, i, this.tasks[i]);
+					};
+
+					this.tasks[i]['isComplete'] = !this.tasks[i]['isComplete'];
+					$.post('/tasks/' + this.tasks[i]['id'] + '/complete', this.tasks[i], $.proxy(handler, this));
+				}
+			}
+		});
+	</script>
+</body>
+
+</html>
